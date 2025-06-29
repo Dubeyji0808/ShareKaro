@@ -71,7 +71,7 @@ public class FileController  {
     public static class CORSHandler implements HttpHandler /*You implement this method to define how to respond to requests for a particular route.*/ {
 
         @Override
-        public void handle(HttpExchange exchange /*http exchnage conatain all important function like getRequestMethod() it has response reading methods*/) throws IOException{
+        public void handle(HttpExchange exchange /*http exchnage conatain all important function like getRequestMethod() it has response reading methods*/) throws IOException {
 
             //http header is used to read http request header
             Headers headers = new Headers();
@@ -93,7 +93,116 @@ public class FileController  {
                 os.write(response.getBytes());
             }
         }
-
-
     }
+
+
+       //now lets implement parser
+       private static class MultipartParser{
+
+           private final byte[] data;
+           //byte[] data:
+           //The raw HTTP request body. For file uploads, this contains a mix of:
+           //headers (like filename, content-type),
+           //boundary separators, and actual binary file content.
+           private final String boundary; // its the seperator in http request
+
+            private MultipartParser(byte[] data, String boundary) {
+                this.data = data;
+                this.boundary = boundary;
+            }
+
+            public ParseResult parse(){
+                try{
+                    String dataAsString = new String(data); // we have to change this for video file sharing
+                    String filenameMarker = "filename=\"";
+                    int filenameStart = dataAsString.indexOf(filenameMarker); // take one and two parameter string to find and from where to start;
+                    if (filenameStart == -1) {
+                        return null;
+                    }
+
+                    filenameStart += filenameMarker.length();
+                    int filenameEnd = dataAsString.indexOf("\"", filenameStart);
+                    String filename = dataAsString.substring(filenameStart, filenameEnd);
+
+                    String contentTypeMarker = "Content-Type: ";
+                    int contentTypeStart = dataAsString.indexOf(contentTypeMarker, filenameEnd);
+                    String contentType = "application/octet-stream"; // Default
+                    //"application/octet-stream" is the default MIME type used when the actual content type is unknown or not specified.
+                    //
+                    //🔤 Breakdown:
+                    //MIME type: A label that tells the browser or system what kind of data the file is.
+                    //"application": Category (i.e., it's some application data — not text, image, etc.)
+                    //"octet-stream": Just means "raw bytes" — literally, it's just a stream of 8-bit binary data.
+
+                    if (contentTypeStart != -1) {
+                        contentTypeStart += contentTypeMarker.length();
+                        int contentTypeEnd = dataAsString.indexOf("\r\n", contentTypeStart);
+                        contentType = dataAsString.substring(contentTypeStart, contentTypeEnd);
+                    }
+
+                    String headerEndMarker = "\r\n\r\n";
+                    //In HTTP/multipart data, there’s always an empty line (two \r\ns) after the headers.
+                    //Example:
+                    //Content-Disposition: ...
+                    //Content-Type: ...
+                    //
+                    //<---- empty line ---->
+                    //FILE CONTENT STARTS HERE
+                    int headerEnd = dataAsString.indexOf(headerEndMarker);
+                    if (headerEnd == -1) {
+                        return null;
+                    }
+                    int contentStart = headerEnd + headerEndMarker.length();
+
+                    byte[] boundaryBytes = ("\r\n--" + boundary + "--").getBytes();
+                    int contentEnd = findSequence(data, boundaryBytes, contentStart);
+
+                    if (contentEnd == -1) {
+                        boundaryBytes = ("\r\n--" + boundary).getBytes();
+                        contentEnd = findSequence(data, boundaryBytes, contentStart);
+                    }
+
+                    if (contentEnd == -1 || contentEnd <= contentStart) {
+                        return null;
+                    }
+
+                    byte[] fileContent = new byte[contentEnd - contentStart];
+                    System.arraycopy(data, contentStart, fileContent, 0, fileContent.length);
+
+                    return new ParseResult(filename, contentType, fileContent);
+
+
+                }catch (Exception e){
+                    System.out.println("Error parsing multipart data: " + e.getMessage());
+                    return null;
+                }
+            }
+           public static class ParseResult {
+               public final String filename;
+               public final String contentType;
+               public final byte[] fileContent;
+
+               public ParseResult(String filename, String contentType, byte[] fileContent) {
+                   this.filename = filename;
+                   this.contentType = contentType;
+                   this.fileContent = fileContent;
+               }
+           } private int findSequence(byte[] data, byte[] sequence, int startPos) {
+                //Parameters:
+               //data: The full byte array (e.g., entire HTTP request body)
+               //sequence: The byte pattern you want to find (like boundary \r\n--boundary)
+               //startPos: The position to start searching from
+               outer:
+               for (int i = startPos; i <= data.length - sequence.length; i++) {
+                   for (int j = 0; j < sequence.length; j++) {
+                       if (data[i + j] != sequence[j]) {
+                           continue outer;
+                       }
+                   }
+                   return i;
+               }
+               return -1;
+           }
+       }
+        }
 }
