@@ -19,7 +19,7 @@ public class FileSharer {
     public FileSharer(){
         existingfile = new HashMap<>();
     }
-    public int offerport( String filepath) {
+    public int offerfile( String filepath) {
         int port;
         while (true) {
             port = Uploadutils.generateport();
