@@ -9,9 +9,11 @@ import src.main.java.ayush.Services.FileSharer;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.commons.io.IOUtils;
 
 public class FileController {
 
@@ -285,6 +287,94 @@ public class FileController {
                 exchange.sendResponseHeaders(500, response.getBytes().length);
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(response.getBytes());
+                }
+            }
+        }
+
+    }
+    private class DownloadHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            Headers headers = exchange.getResponseHeaders();
+            headers.add("Access-Control-Allow-Origin", "*"); // Allow requests from any domain (CORS)
+
+            // Allow only GET requests
+            if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+                String response = "Method Not Allowed";
+                exchange.sendResponseHeaders(405, response.getBytes().length); // Send 405 error
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+                return; // Stop execution if not GET
+            }
+
+            // Get the path from URL and extract port number (e.g., /download/12345 -> 12345)
+            String path = exchange.getRequestURI().getPath();
+            String portStr = path.substring(path.lastIndexOf('/') + 1);
+
+            try {
+                int port = Integer.parseInt(portStr); // Convert port to integer
+
+                // Connect to the sender socket at localhost:<port>
+                try (Socket socket = new Socket("localhost", port);
+                     InputStream socketInput = socket.getInputStream()) {
+
+                    // Create a temporary file to store incoming data
+                    File tempFile = File.createTempFile("download-", ".tmp");
+                    String filename = "downloaded-file"; // Default filename if none is provided
+
+                    // Open stream to write received data to the temp file
+                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                        byte[] buffer = new byte[4096]; // Buffer for reading data
+                        int bytesRead;
+
+                        // === Read header to get the original filename ===
+                        ByteArrayOutputStream headerBaos = new ByteArrayOutputStream();
+                        int b;
+                        while ((b = socketInput.read()) != -1) {
+                            if (b == '\n') break; // End of header
+                            headerBaos.write(b);
+                        }
+
+                        // Parse filename from header if it exists
+                        String header = headerBaos.toString().trim();
+                        if (header.startsWith("Filename: ")) {
+                            filename = header.substring("Filename: ".length());
+                        }
+
+                        // === Read the actual file content and save to temp file ===
+                        while ((bytesRead = socketInput.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead);
+                        }
+                    }
+
+                    // === Set response headers to make browser download the file ===
+                    headers.add("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+                    headers.add("Content-Type", "application/octet-stream");
+
+                    // Send HTTP 200 OK with file size
+                    exchange.sendResponseHeaders(200, tempFile.length());
+
+                    // === Send file content to the client ===
+                    try (OutputStream os = exchange.getResponseBody();
+                         FileInputStream fis = new FileInputStream(tempFile)) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = fis.read(buffer)) != -1) {
+                            os.write(buffer, 0, bytesRead);
+                        }
+                    }
+
+                    // Delete the temp file after sending
+                    tempFile.delete();
+
+                }
+            } catch (Exception e) {
+                // Handle errors (invalid port, connection failure, etc.)
+                String errorResponse = "Error: " + e.getMessage();
+                exchange.sendResponseHeaders(500, errorResponse.getBytes().length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(errorResponse.getBytes());
                 }
             }
         }
