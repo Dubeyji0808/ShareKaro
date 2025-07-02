@@ -1,0 +1,29 @@
+# macOS-specific
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/
+
+# Java / Maven
+target/
+*.log
+
+# Local config files
+*.local
+*.env
+.env.*
+
+# IntelliJ-specific cache and workspace
+/shelf/
+/.idea/workspace.xml
+/mavenHomeManager.xml
+
+# OS junk files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
