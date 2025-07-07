@@ -36,3 +36,26 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Ignore Next.js build and dependencies from nested ui/sharekaro
+/ui/sharekaro/.next
+/ui/sharekaro/node_modules
+/ui/sharekaro/out
+/ui/sharekaro/.turbo
+
+# Ignore environment variable files
+/ui/sharekaro/.env.local
+/ui/sharekaro/.env.development.local
+/ui/sharekaro/.env.test.local
+/ui/sharekaro/.env.production.local
+
+# Ignore test coverage and other artifacts
+/ui/sharekaro/coverage
+/ui/sharekaro/.vercel
+/ui/sharekaro/build
+
+# Log files
+/ui/sharekaro/npm-debug.log*
+/ui/sharekaro/yarn-debug.log*
+/ui/sharekaro/yarn-error.log*
+/ui/sharekaro/pnpm-debug.log*
