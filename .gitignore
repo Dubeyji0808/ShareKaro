@@ -38,24 +38,33 @@ build/
 .DS_Store
 
 # Ignore Next.js build and dependencies from nested ui/sharekaro
-/ui/sharekaro/.next
-/ui/sharekaro/node_modules
-/ui/sharekaro/out
-/ui/sharekaro/.turbo
+/ui/.next
+/ui/node_modules
+/ui/out
+/ui/.turbo
 
 # Ignore environment variable files
-/ui/sharekaro/.env.local
-/ui/sharekaro/.env.development.local
-/ui/sharekaro/.env.test.local
-/ui/sharekaro/.env.production.local
+/ui/.env.local
+/ui/.env.development.local
+/ui/.env.test.local
+/ui/.env.production.local
 
 # Ignore test coverage and other artifacts
-/ui/sharekaro/coverage
-/ui/sharekaro/.vercel
-/ui/sharekaro/build
+/ui/coverage
+/ui/.vercel
+/ui/build
 
 # Log files
-/ui/sharekaro/npm-debug.log*
-/ui/sharekaro/yarn-debug.log*
-/ui/sharekaro/yarn-error.log*
-/ui/sharekaro/pnpm-debug.log*
+/ui/npm-debug.log*
+/ui/yarn-debug.log*
+/ui/yarn-error.log*
+/ui/pnpm-debug.log*
+
+**/node_modules/
+# Ignore all Next.js build files
+/ui/.next/
+/ui/out/
+/ui/node_modules/
+**/.next/
+/**/.next/
+/**/node_modules/
