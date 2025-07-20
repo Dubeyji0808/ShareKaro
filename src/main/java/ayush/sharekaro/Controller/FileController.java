@@ -22,6 +22,8 @@ public class FileController {
     private final HttpServer server;
     private final String uploadDir;
     private final ExecutorService executorService;
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 
     //fileSharer: An object that will handle offering and serving files (probably sharing files over sockets).
     //server: An instance of HttpServer from Java’s built-in lightweight HTTP server (not like Spring Boot).
@@ -254,6 +256,15 @@ public class FileController {
                 if (result == null) {
                     String response = "Bad Request: Could not parse file content";
                     exchange.sendResponseHeaders(400, response.getBytes().length);
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response.getBytes());
+                    }
+                    return;
+                }
+                // ✅ NEW: File size validation (added below)
+                if (result.fileContent.length > MAX_FILE_SIZE) {
+                    String response = "File too large. Max allowed size is 10MB.";
+                    exchange.sendResponseHeaders(413, response.getBytes().length); // 413 = Payload Too Large
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.getBytes());
                     }
