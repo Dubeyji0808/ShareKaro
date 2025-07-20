@@ -117,6 +117,7 @@ public class FileController {
         public ParseResult parse() {
             try {
                 String dataAsString = new String(data); // we have to change this for video file sharing
+                //why it still able to share .mp3 and .mp4 is because our file are small and not corrupted but if file is big it will have correpted then it will cause problem.
                 String filenameMarker = "filename=\"";
                 int filenameStart = dataAsString.indexOf(filenameMarker); // take one and two parameter string to find and from where to start;
                 if (filenameStart == -1) {
