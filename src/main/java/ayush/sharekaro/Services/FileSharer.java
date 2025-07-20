@@ -79,7 +79,7 @@ public class FileSharer {
 //🟢 InputStream → for reading data (input coming into your program) read the file
 //🔴 OutputStream → for writing data (output going out from your program) send to the client
             try(FileInputStream fis = new FileInputStream(filepath);
-                OutputStream oss = clientsocket.getOutputStream();){
+                OutputStream oss = clientsocket.getOutputStream()){
                 // Send the filename as a header
                 String filename = new File(filepath).getName();
                 String header = "Filename: " + filename + "\n";
